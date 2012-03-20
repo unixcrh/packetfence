@@ -1554,9 +1554,6 @@ sub config {
         }
     }
 
-    # get rid of spaces (a la [interface X])
-    #$param =~ s/\s+/./g;
-
     my $parm;
     my $section;
 
