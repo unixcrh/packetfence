@@ -19,6 +19,17 @@ use Log::Log4perl;
 use Readonly;
 use Regexp::Common qw(net);
 
+use pf::config;
+
+BEGIN {
+    use Exporter ();
+    our ( @ISA, @EXPORT );
+    @ISA    = qw(Exporter);
+    @EXPORT = qw(
+        field_order
+    );
+}
+
 # some constants used by pfcmd
 
 # exit status
@@ -478,6 +489,35 @@ sub parseWithGrammar {
     my %cmd;
     $cmd{'grammar'} = ( defined($result) ? 1 : 0 );
     return %cmd;
+}
+
+=head2 field_order
+
+Return the correct field order listed in ui.conf Display
+
+=cut
+
+sub field_order {
+    my $logger = Log::Log4perl::get_logger("pf::pfcmd");
+    my %uiconfig;
+    tie %uiconfig, 'Config::IniFiles', ( -file => $conf_dir . "/ui.conf" )
+        or $logger->logdie("Unable to open ui.conf: $!");
+    my @fields;
+    foreach my $section ( sort tied(%uiconfig)->Sections ) {
+        if ( defined $uiconfig{$section}{'command'}
+            && join( " ", @ARGV ) =~ /^$uiconfig{$section}{'command'}/ )
+        {
+            foreach
+                my $val ( split( /\s*,\s*/, $uiconfig{$section}{'display'} ) )
+            {
+                $val =~ s/-//;
+                push @fields, $val;
+            }
+            last;
+        }
+    }
+    untie %uiconfig;
+    return (@fields);
 }
 
 =head1 AUTHOR
