@@ -5,7 +5,7 @@ use namespace::autoclean;
 use Log::Log4perl::Catalyst;
 use Catalyst::Runtime 5.90;
 
-use constant INSTALL_DIR => '/root/src/packetfence.git';
+use constant INSTALL_DIR => '/usr/local/pf';
 use lib INSTALL_DIR . "/lib";
 use pf::config;
 
