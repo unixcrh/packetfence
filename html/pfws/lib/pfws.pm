@@ -21,6 +21,12 @@ use Catalyst qw/
     -Debug
     ConfigLoader
     Static::Simple
+
+    Authentication
+
+    Session
+    Session::Store::File
+    Session::State::Cookie
 /;
 
 extends 'Catalyst';
@@ -47,6 +53,40 @@ __PACKAGE__->config(
        callback_param  => 'cb', # defaults to 'callback'
        expose_stash    => [ qw(result error switches) ], # defaults to everything
     },
+
+    'Plugin::Session' => {
+      storage => '/tmp/session'
+    },
+
+    'Plugin::Authentication' => {
+       default_realm => 'pfws',
+       realms => {
+         pfws => {
+           credential => {
+             class => 'HTTP',
+             type => 'basic', # digest requires a cache
+             password_field => 'password',
+             password_type => 'self_check',
+           },
+           store => {
+             class => 'Htpasswd',
+             file => '/usr/local/pf/conf/admin.conf', # must exist
+#             class => 'Minimal',
+#             users => {
+#               bob => {
+#                 password => "s00p3r",
+#                 editor => 'yes',
+#                 roles => [qw/edit delete/],
+#               },
+#               william => {
+#                 password => "s3cr3t",
+#                 roles => [qw/comment/],
+#               }
+#             }
+           }
+         }
+       }
+     },
 );
 
 # Log to packetfence.log

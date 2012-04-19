@@ -54,6 +54,21 @@ Attempt to render a view, if needed.
 sub end : ActionClass('RenderView') {}
 
 
+=head2 auto
+
+Allow only authenticated users unless the application is accessed
+from localhost.
+
+=cut
+
+sub auto :Private {
+  my ($self, $c) = @_;
+
+  unless ($c->req->address eq '127.0.0.1') {
+    $c->authenticate({ realm => "pfws" });
+  }
+}
+
 =head1 AUTHOR
 
 root
