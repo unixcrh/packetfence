@@ -1,4 +1,4 @@
-package pfws::Controller::Switches;
+package pfws::Controller::Switch;
 use Moose;
 use namespace::autoclean;
 use JSON;
@@ -7,7 +7,7 @@ BEGIN {extends 'Catalyst::Controller'; }
 
 =head1 NAME
 
-pfws::Controller::Switches - Catalyst Controller
+pfws::Controller::Switch - Catalyst Controller
 
 =head1 DESCRIPTION
 
@@ -34,10 +34,10 @@ Chained dispatch for a switch.
 
 =cut
 
-sub object :Chained('/') :PathPart('switches') :CaptureArgs(1) {
+sub object :Chained('/') :PathPart('switch') :CaptureArgs(1) {
   my ($self, $c, $section) = @_;
 
-  unless ($c->model('Switches')->sectionExists($section)) {
+  unless ($c->model('Switch')->sectionExists($section)) {
     $c->res->status(404);
     $c->stash->{result} = "Unknown switch $section";
     $c->detach();
@@ -48,7 +48,7 @@ sub object :Chained('/') :PathPart('switches') :CaptureArgs(1) {
 
 =head2 get
 
-/switches/<section>/get
+/switch/<section>/get
 
 =cut
 
@@ -58,7 +58,7 @@ sub get :Chained('object') :PathPart('get') :Args(0) {
 
   my $result;
   eval {
-    $result = $c->model('Switches')->get($section);
+    $result = $c->model('Switch')->get($section);
   };
   if ($@) {
     chomp $@;
@@ -73,7 +73,7 @@ sub get :Chained('object') :PathPart('get') :Args(0) {
 
 =head2 delete
 
-/switches/<ip>/delete
+/switch/<ip>/delete
 
 =cut
 
@@ -83,7 +83,7 @@ sub delete :Chained('object') :PathPart('delete') :Args(0) {
 
   my $result;
   eval {
-    $result = $c->model('Switches')->remove($section);
+    $result = $c->model('Switch')->remove($section);
   };
   if ($@) {
     chomp $@;
@@ -98,7 +98,7 @@ sub delete :Chained('object') :PathPart('delete') :Args(0) {
 
 =head2 edit
 
-/switches/<ip>/edit
+/switch/<ip>/edit
 
 =cut
 
@@ -120,7 +120,7 @@ sub edit :Chained('object') :PathPart('edit') :Args(0) {
       $c->stash->{result} = $@;
     }
     else {
-      eval { $result = $c->model('Switches')->edit($section, $assignments); };
+      eval { $result = $c->model('Switch')->edit($section, $assignments); };
       if ($@) {
         chomp $@;
         $c->res->status(500);
@@ -140,7 +140,7 @@ sub edit :Chained('object') :PathPart('edit') :Args(0) {
 
 =head2 add
 
-/switches/add/<ip>
+/switch/add/<ip>
 
 =cut
 
@@ -161,7 +161,7 @@ sub add :Local {
       $c->stash->{result} = $@;
     }
     else {
-      eval { $result = $c->model('Switches')->add($section, $assignments); };
+      eval { $result = $c->model('Switch')->add($section, $assignments); };
       if ($@) {
         chomp $@;
         $c->res->status(500);

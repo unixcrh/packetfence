@@ -1,8 +1,8 @@
-package pfws::Model::Switches;
+package pfws::Model::Switch;
 use Moose;
 use namespace::autoclean;
 
-use constant INSTALL_DIR => '/root/src/packetfence.git';
+use constant INSTALL_DIR => '/usr/local/pf';
 use lib INSTALL_DIR . "/lib";
 
 use pf::config;
@@ -14,7 +14,7 @@ extends 'Catalyst::Model';
 
 =head1 NAME
 
-pfws::Model::Switches - Catalyst Model
+pfws::Model::Switch - Catalyst Model
 
 =head1 DESCRIPTION
 
