@@ -1,0 +1,6 @@
+[% IF message %]<p><b>Warning</b>: [% message %]</p>[% END %]
+<form method="post" action="[% c.uri_for('add') %]">
+Interface : <input type="text" name="section" value="eth1"><br>
+Assignments : <textarea name="assignments" cols="80">[["mask","255.255.255.0"], ["type","management"],["gateway","192.168.0.2"],["ip","192.168.0.1"]]</textarea><br>
+<input type="submit" value="Add">
+</form>
