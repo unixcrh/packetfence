@@ -827,6 +827,11 @@ sub interfaceconfig {
         return 0;
     }
 
+    use LWP::UserAgent;
+    use JSON;
+    my $ua = LWP::UserAgent->new;
+    my $url = 'http://localhost:3000/interface/';
+
     my $mode;
     if ( scalar( @{ $cmd{'command'} } ) == 1 ) {
         if ( exists( $cmd{'interfaceconfig_options'} ) ) {
@@ -837,91 +842,34 @@ sub interfaceconfig {
     }
 
     if ( $mode eq 'get' ) {
-        foreach my $section ( tied(%pf_conf)->Sections ) {
-            foreach my $key ( keys %{ $pf_conf{$section} } ) {
-                $pf_conf{$section}{$key} =~ s/\s+$//;
-            }
+      my $section = $cmd{'command'}[2];
+      my $response = $ua->get($url.$section.'/get');
+      if ($response->is_success) {
+        # Convert from JSON to a pipe-delimited string
+        my $s = decode_json($response->content);
+        foreach my $interface (@{$s->{interfaces}}) {
+          print join('|', @{$interface}),"\n";
         }
-        # TODO columns should be auto-detected and displayed based on ui.conf (like print_results does)
-        my @columns = qw(ip mask type enforcement gateway vip);
-        print "interface|" . join( "|", @columns ) . "\n";
-        foreach my $section ( keys %pf_conf ) {
-            if ( $section =~ /^interface (.+)$/ ) {
-                my $interface_name = $1;
-                if (   ( $cmd{'command'}[2] eq 'all' )
-                    || ( $cmd{'command'}[2] eq $interface_name ) )
-                {
-                    my @values;
-                    foreach my $column (@columns) {
-                        push @values, ( $pf_conf{$section}{$column} || '' );
-                    }
-                    print $interface_name . '|' . join( "|", @values ) . "\n";
-                }
-            }
-        }
+      }
+      else {
+        print_response($response);
+      }
     } elsif ( $mode eq 'delete' ) {
-        my $section      = $cmd{'command'}[2];
-        my $section_name = "interface $section";
-        if ( $section eq 'all' ) {
-            print "This interface can't be deleted (Error at line ".__LINE__." in pfcmd)\n";
-            exit;
-        } else {
-            if ( tied(%pf_conf)->SectionExists($section_name) ) {
-                tied(%pf_conf)->DeleteSection($section_name);
-                tied(%pf_conf)->WriteConfig( $conf_dir . "/pf.conf" )
-                    or $logger->logdie("Unable to write config to $conf_dir/pf.conf. "
-                        ."You might want to check the file's permissions. (pfcmd line ".__LINE__.".)"); # web ui hack
-                require pf::configfile;
-                import pf::configfile;
-                configfile_import( $conf_dir . "/pf.conf" );
-            } else {
-                print "Unknown interface $section! (Error at line ".__LINE__." in pfcmd)\n";
-                exit;
-            }
-        }
+        my $section = $cmd{'command'}[2];
+        my $response = $ua->get($url.$section.'/delete');
+        print_response($response);
     } elsif ( $mode eq 'edit' ) {
         my $section      = $cmd{'interfaceconfig_options'}[1];
-        my $section_name = "interface $section";
         my @assignments  = @{ $cmd{'interfaceconfig_assignment'} };
-        if ( tied(%pf_conf)->SectionExists($section_name) ) {
-            foreach my $assignment (@assignments) {
-                my ( $param, $value ) = @$assignment;
-                if ( defined( $pf_conf{$section_name}{$param} ) ) {
-                    tied(%pf_conf)->setval( $section_name, $param, $value );
-                } else {
-                    tied(%pf_conf)->newval( $section_name, $param, $value );
-                }
-            }
-            tied(%pf_conf)->WriteConfig( $conf_dir . "/pf.conf" )
-                or $logger->logdie("Unable to write config to $conf_dir/pf.conf. "
-                    ."You might want to check the file's permissions. (pfcmd line ".__LINE__.".)"); # web ui hack
-            require pf::configfile;
-            import pf::configfile;
-            configfile_import( $conf_dir . "/pf.conf" );
-        } else {
-            print "Unknown interface $section! (Error at line ".__LINE__." in pfcmd)\n";
-            exit;
-        }
+        my $response = $ua->post($url.$section.'/edit',
+                                 {'assignments' => encode_json(\@assignments)});
+        print_response($response);
     } elsif ( $mode eq 'add' ) {
         my $section      = $cmd{'interfaceconfig_options'}[1];
-        my $section_name = "interface $section";
         my @assignments  = @{ $cmd{'interfaceconfig_assignment'} };
-        if ( !( tied(%pf_conf)->SectionExists($section_name) ) ) {
-            foreach my $assignment (@assignments) {
-                tied(%pf_conf)->AddSection($section_name);
-                my ( $param, $value ) = @$assignment;
-                tied(%pf_conf)->newval( $section_name, $param, $value );
-            }
-            tied(%pf_conf)->WriteConfig( $conf_dir . "/pf.conf" )
-                or $logger->logdie("Unable to write config to $conf_dir/pf.conf. "
-                    ."You might want to check the file's permissions. (pfcmd line ".__LINE__.".)"); # web ui hack
-            require pf::configfile;
-            import pf::configfile;
-            configfile_import( $conf_dir . "/pf.conf" );
-        } else {
-            print "Interface $section already exists! (Error at line ".__LINE__." in pfcmd)\n";
-            exit;
-        }
+        my $response = $ua->post($url.'add/'.$section,
+                                 {'assignments' => encode_json(\@assignments)});
+        print_response($response);
     }
 }
 
@@ -940,7 +888,7 @@ sub switchconfig {
     use LWP::UserAgent;
     use JSON;
     my $ua = LWP::UserAgent->new;
-    my $url = 'http://localhost:3000/switches/';
+    my $url = 'http://localhost:3000/switch/';
 
     my $mode;
     if ( scalar( @{ $cmd{'command'} } ) == 1 ) {
@@ -952,7 +900,8 @@ sub switchconfig {
     }
 
     if ( $mode eq 'get' ) {
-      my $response = $ua->get($url.$cmd{'command'}[2].'/get');
+      my $section = $cmd{'command'}[2];
+      my $response = $ua->get($url.$section.'/get');
       if ($response->is_success) {
         # Convert from JSON to a pipe-delimited string
         my $s = decode_json($response->content);
@@ -976,8 +925,8 @@ sub switchconfig {
     } elsif ( $mode eq 'add' ) {
         my $section     = $cmd{'switchconfig_options'}[1];
         my @assignments = @{ $cmd{'switchconfig_assignment'} };
-        my $response = $ua->post($url.'/add/'.$section,
-                                 {'assignments' => encode_json(\@assignments)});        
+        my $response = $ua->post($url.'add/'.$section,
+                                 {'assignments' => encode_json(\@assignments)});
         print_response($response);
     }
 }
@@ -1993,6 +1942,7 @@ sub print_response {
   my $response = shift;
 
   print $response->is_success? "SUCCESS" : "ERROR";
+  print " (" . $response->code . ")";
   my $r;
   eval {
     $r = decode_json($response->content);
