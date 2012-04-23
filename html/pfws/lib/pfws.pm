@@ -51,7 +51,7 @@ __PACKAGE__->config(
     'View::JSON' => {
        allow_callback  => 1,    # defaults to 0
        callback_param  => 'cb', # defaults to 'callback'
-       expose_stash    => [ qw(result error switches) ], # defaults to everything
+       expose_stash    => [ qw(result error interfaces switches) ], # defaults to everything
     },
 
     'Plugin::Session' => {

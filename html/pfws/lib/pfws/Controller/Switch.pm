@@ -88,7 +88,7 @@ sub delete :Chained('object') :PathPart('delete') :Args(0) {
   if ($@) {
     chomp $@;
     $c->res->status(500);
-    $c->stash->{result} => $@;
+    $c->stash->{result} = $@;
   }
   else {
     $c->res->status(200);
@@ -134,22 +134,24 @@ sub edit :Chained('object') :PathPart('edit') :Args(0) {
   }
   else {
     $c->res->status(400);
-    $c->stash->{result} => 'Missing parameters';
+    $c->stash->{result} = 'Missing parameters';
   }
 }
 
 =head2 add
 
 /switch/add/<ip>
+/switch/add?section=<ip>
 
 =cut
 
 sub add :Local {
   my ($self, $c, $section) = @_;
 
+  $section = $c->request->params->{section} unless ($section);
   my $assignments = $c->request->params->{assignments};
 
-  if ($assignments) {
+  if ($section && $assignments) {
     my $result;
     eval {
       $assignments = decode_json($assignments);
@@ -175,7 +177,7 @@ sub add :Local {
   }
   else {
     $c->res->status(400);
-    $c->stash(message => 'Missing parameters');
+    $c->stash->{message} = 'Missing parameters';
     $c->forward('View::HTML');
   }
 }

@@ -22,12 +22,24 @@ Catalyst Model.
 
 =head1 AUTHOR
 
-root
+Francis Lachapelle <flachapelle@inverse.ca>
 
 =head1 LICENSE
 
-This library is free software. You can redistribute it and/or modify
-it under the same terms as Perl itself.
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+USA.
 
 =cut
 
@@ -40,8 +52,7 @@ sub _switches_conf {
 
   unless (defined $switches) {
     my %switches_conf;
-    tie %switches_conf, 'Config::IniFiles',
-      ( -file => "$conf_dir/switches.conf" );
+    tie %switches_conf, 'Config::IniFiles', ( -file => "$conf_dir/switches.conf" );
     my @errors = @Config::IniFiles::errors;
     if ( scalar(@errors) || !%switches_conf) {
       $logger->logdie("Error reading switches.conf: " . join( "\n", @errors ) . "\n" );
@@ -136,23 +147,23 @@ sub remove {
   my ($self, $section) = @_;
 
   if ( $section =~ /^(default|all|127.0.0.1)$/ ) {
-    die "This switch can't be deleted";
+    die "This switch can't be deleted\n";
+  }
+
+  my $switches_conf = $self->_switches_conf();
+  my $tied_switch = tied(%$switches_conf);
+  if ( $tied_switch->SectionExists($section) ) {
+    $tied_switch->DeleteSection($section);
+    $tied_switch->WriteConfig($conf_dir . "/switches.conf")
+      or $logger->logdie("Unable to write config to $conf_dir/switches.conf. "
+                         ."You might want to check the file's permissions.\n");
+    # The following snippet updates the database
+    require pf::configfile;
+    import pf::configfile;
+    configfile_import( $conf_dir . "/switches.conf" );
   } else {
-    my $switches_conf = $self->_switches_conf();
-    my $tied_switch = tied(%$switches_conf);
-    if ( $tied_switch->SectionExists($section) ) {
-      $tied_switch->DeleteSection($section);
-      $tied_switch->WriteConfig($conf_dir . "/switches.conf")
-        or $logger->logdie("Unable to write config to $conf_dir/switches.conf. "
-                           ."You might want to check the file's permissions.");
-      # The following snippet updates the database
-      require pf::configfile;
-      import pf::configfile;
-      configfile_import( $conf_dir . "/switches.conf" );
-    } else {
-      # Section not found
-      return undef;
-    }
+    # Section not found
+    return undef;
   }
   
   return "Successfully deleted $section";
@@ -160,6 +171,10 @@ sub remove {
 
 sub add {
   my ($self, $section, $assignments) = @_;
+
+  if ( $section =~ /^(default|all|127.0.0.1)$/ ) {
+    die "This is a reserved switch name\n";
+  }
 
   my $switches_conf = $self->_switches_conf();
   my $tied_switch = tied(%$switches_conf);
@@ -175,7 +190,7 @@ sub add {
     }
     $tied_switch->WriteConfig($conf_dir . "/switches.conf")
       or die "Unable to write config to $conf_dir/switches.conf. "
-        ."You might want to check the file's permissions.";
+        ."You might want to check the file's permissions.\n";
     require pf::configfile;
     import pf::configfile;
     configfile_import( $conf_dir . "/switches.conf" );
@@ -189,6 +204,10 @@ sub add {
 sub edit {
   my ($self, $section, $assignments) = @_;
 
+  if ( $section =~ /^(default|all|127.0.0.1)$/ ) {
+    die "This switch can't be edited\n";
+  }
+  
   my $switches_conf = $self->_switches_conf();
   my $tied_switch = tied(%$switches_conf);
   if ( $tied_switch->SectionExists($section) ) {
@@ -220,7 +239,7 @@ sub edit {
     }
     $tied_switch->WriteConfig($conf_dir . "/switches.conf")
       or $logger->logdie("Unable to write config to $conf_dir/switches.conf. "
-                         ."You might want to check the file's permissions.");
+                         ."You might want to check the file's permissions.\n");
     require pf::configfile;
     import pf::configfile;
     configfile_import( $conf_dir . "/switches.conf" );
