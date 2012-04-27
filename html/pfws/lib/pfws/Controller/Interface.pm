@@ -25,7 +25,7 @@ Catalyst Controller.
 sub index :Path :Args(0) {
     my ( $self, $c ) = @_;
 
-    $c->forward('get', ['all', 'get']);
+    $c->visit('get', ['all'], ['get']);
 }
 
 =head2 object
