@@ -1956,6 +1956,24 @@ sub print_response {
   print "\n";
 }
 
+#
+# format a hash of assignments based on the grammar
+# example: format_assignment($cmd{node_assignment});
+#
+sub format_assignment {
+    my @fields = @_;
+    my ( @columns, @values, @assignment, %return );
+    foreach my $array (@fields) {
+        my $column     = $array->[0];
+        my $value      = $array->[1];
+        my $assignment = $array->[2];
+        $column =~ s/$delimiter//g;
+        $value  =~ s/$delimiter//g;
+        $return{$column} = $value;
+    }
+    return (%return);
+}
+
 =head1 AUTHOR
 
 Dave Laporte <dave@laportestyle.org>
