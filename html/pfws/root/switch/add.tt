@@ -1,6 +1,8 @@
-[% IF message %]<p><b>Warning</b>: [% message %]</p>[% END %]
-<form method="post" action="[% c.uri_for('add') %]">
-IP : <input type="text" name="section" value="192.168.0.1"><br>
-Assignments : <textarea name="assignments" cols="80">[["type","Cisco::Catalyst_2962"], ["mode","production"],["VoIPEnabled","no"],["uplink","dynamic"]]</textarea><br>
-<input type="submit" value="Add">
+[% FOREACH error IN errors %]
+<p><b>[% error.key %]:</b> [% error.value %]</p>
+[% END %]
+<form method="post" action="[% c.uri_for(c.controller.action_for('add')) %]">
+IP : <input type="text" name="section" value="[% form.param_value('section') || '192.168.0.1' %]"><br>
+Assignments : <textarea name="assignments" cols="80">[% form.param_value('assignments') || '[["type","Cisco::Catalyst_2962"], ["mode","production"],["VoIPEnabled","no"],["uplink","dynamic"]]' %]</textarea><br>
+<input type="submit" name="submit" value="Add">
 </form>

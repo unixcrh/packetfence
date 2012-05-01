@@ -3,7 +3,7 @@ use Moose;
 use namespace::autoclean;
 use JSON;
 
-BEGIN {extends 'Catalyst::Controller'; }
+BEGIN {extends 'Catalyst::Controller::HTML::FormFu'; }
 
 =head1 NAME
 
@@ -145,41 +145,56 @@ sub edit :Chained('object') :PathPart('edit') :Args(0) {
 
 =cut
 
-sub add :Local {
+sub add :Local :FormConfig {
   my ($self, $c, $section) = @_;
 
   $section = $c->request->params->{section} unless ($section);
   my $assignments = $c->request->params->{assignments};
 
-  if ($section && $assignments) {
-    my $result;
-    eval {
-      $assignments = decode_json($assignments);
-    };
+  my $result;
+  eval {
+    $assignments = decode_json($assignments);
+  };
+  if ($@) {
+    # Malformed JSON
+    chomp $@;
+    $c->res->status(400);
+    $c->stash->{result} = $@;
+  }
+  else {
+    eval { $result = $c->model('Switch')->add($section, $assignments); };
     if ($@) {
-      # Malformed JSON
       chomp $@;
-      $c->res->status(400);
+      $c->res->status(500);
       $c->stash->{result} = $@;
     }
     else {
-      eval { $result = $c->model('Switch')->add($section, $assignments); };
-      if ($@) {
-        chomp $@;
-        $c->res->status(500);
-        $c->stash->{result} = $@;
-      }
-      else {
-        $c->res->status(201);
-        $c->stash->{result} = $result;
-      }
+      $c->res->status(201);
+      $c->stash->{result} = $result;
     }
   }
-  else {
-    $c->res->status(400);
-    $c->stash->{message} = 'Missing parameters';
-    $c->forward('View::HTML');
+}
+
+sub add_FORM_NOT_VALID {
+  my ($self, $c) = @_;
+
+  my $form = $c->stash->{form};
+  my $exceptions = $form->get_errors({stage => 'constraint'});
+  my %errors = ();
+  foreach my $ex (@{$exceptions}) {
+    $errors{$ex->name} = $ex->message; #$ex->constraint->message;
   }
+  $c->stash->{errors} = \%errors;
+  $c->res->status(400);
+  $c->stash->{template} = $c->namespace.'/add.tt';
+  $c->forward('View::HTML');
+}
+
+sub add_FORM_NOT_SUBMITTED {
+  my ($self, $c) = @_;
+
+  $c->stash->{template} = $c->namespace.'/add.tt';
+  $c->forward('View::HTML');
 }
 
 =head1 AUTHOR
