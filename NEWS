@@ -26,6 +26,7 @@ Enhancements
  * minor refactoring and cleanup
  * debian support: arp binary location now configurable ([services].arp_binary)
  * log the switch IP when a trap is skipped due to a dynamic uplink fetch not working
+ * LDAP authentication on the admin now supports looking under a group for group authentication (as opposed to the AD-style memberOf search)
 
 Bug Fixes
  * RADIUS-based Disconnects not working for Aruba, AeroHIVE. Introduced in 3.3.2. (#1437)

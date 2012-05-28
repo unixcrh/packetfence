@@ -113,13 +113,9 @@ function validate_user_ldap($user,$pass,$hash='') {
     $logger->info("Unable to bind to LDAP with bind_dn and bind_pwd");
     return false;
   }
-  if (isset($ldap_group_member_key) && isset($ldap_group_dn)) {
-    $filter="(&($ldap_user_key=$user)($ldap_group_member_key=$ldap_group_dn))";
-  } else {
-    $filter="$ldap_user_key=$user";
-  }
 
   # Here we look only into one DN ($ldap_user_base)
+  $filter="$ldap_user_key=$user";
   $result = ldap_search($ldap, $ldap_user_base, $filter, array("dn"));
   $info = ldap_get_entries($ldap, $result);
   if (!$result) {
@@ -162,7 +158,72 @@ function validate_user_ldap($user,$pass,$hash='') {
     $logger->info("Could not bind as a user. Password is not good or the user doesn't have the rights to bind");
     return false;
   }
+
+  # group membership validation
+  if (isset($ldap_group_member_key) && isset($ldap_group_dn)) {
+    # if both the validation fails we fail
+    if (!_validate_group_memberOf($user_dn, $ldap, $ldap_user_base, $ldap_user_key, $user, $ldap_group_member_key, $ldap_group_dn) 
+        && !_validate_group_member($user_dn, $ldap, $ldap_group_dn, $ldap_group_member_key)
+      ) {
+        $logger->info("User is not a member of the required group");
+        return false;
+    } else {
+      $logger->info("User is a member of the required group");
+    }
+  }
+
   return md5($pass);
+}
+
+/**
+ Validate that the user is member of a given group. 
+ Technique: Look under the user for an attribute that represent group membership.
+ */
+function _validate_group_memberOf($user_dn, $ldap, $ldap_user_base, $ldap_user_key, $user, $ldap_group_member_key, $ldap_group_dn) {
+  global $logger;
+
+  # group filter
+  $filter="(&($ldap_user_key=$user)($ldap_group_member_key=$ldap_group_dn))";
+  $result = ldap_search($ldap, $ldap_user_base, $filter, array("dn"));
+  $info = ldap_get_entries($ldap, $result);
+  if (!$result) {
+    $logger->info("technique memberOf: LDAP group query failed, check your settings");
+    return false;
+  }
+
+  if ($info["count"] != 1) {
+    $logger->info("technique memberOf: User not found or more than one user matched when validating group membership");
+    return false;
+  }
+
+  if ($user_dn != $info[0]["dn"]) {
+    $logger->info("technique memberOf: User DN didn't match the user dn when checking for group membership");
+    return false;
+  }
+  return true;
+}
+
+/**
+ Validate that the user is member of a given group. 
+ Technique: Look under the group for an attribute that represent that the user is a member.
+ */
+function _validate_group_member($user_dn, $ldap, $ldap_group_dn, $ldap_group_member_key) {
+  global $logger;
+
+  $filter = "$ldap_group_member_key=$user_dn";
+  # get the group directly with it's DN as the base
+  $result = ldap_search($ldap, $ldap_group_dn, $filter, array("dn"));
+  $info = ldap_get_entries($ldap, $result);
+  if (!$result) {
+    $logger->info("technique group_member: LDAP group query failed, check your settings. Correct group_dn?");
+    return false;
+  }
+
+  if ($info["count"] != 1) {
+    $logger->info("technique group_member: Member not found in group.");
+    return false;
+  }
+  return true;
 }
 
 function validate_user_present_in_flat_file($user){
