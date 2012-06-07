@@ -19,7 +19,7 @@ use threads;
 use threads::shared;
 
 use pf::config;
-use pf::node qw(node_attributes node_exist);
+use pf::node qw(node_attributes node_exist node_modify);
 use pf::SNMP::constants;
 use pf::util;
 use pf::violation qw(violation_count_trap violation_exist_open violation_view_top);
@@ -59,7 +59,7 @@ getRegistrationVlan or getNormalVlan.
 
 =cut
 sub fetchVlanForNode {
-    my ( $this, $mac, $switch, $ifIndex, $connection_type, $user_name, $ssid ) = @_;
+    my ( $this, $mac, $switch, $ifIndex, $connection_type, $user_name, $ssid, $dn ) = @_;
     my $logger = Log::Log4perl::get_logger('pf::vlan');
 
     # violation handling
@@ -79,7 +79,12 @@ sub fetchVlanForNode {
         return $registration;
     }
 
-    # no violation, not unregistered, we are now handling a normal vlan
+    # no violation, not unregistered, we are now check the category posture
+    if (defined($dn) && !evaluateCategory($mac, $node_info, $dn)){
+        $logger->info("Node $mac will keep the previous settings, nothing needs to change");
+    }
+
+    # now handling a normal vlan
     my $vlan = $this->getNormalVlan($switch, $ifIndex, $mac, $node_info, $connection_type, $user_name, $ssid);
     if (!defined($vlan)) {
         $logger->warn("Resolved VLAN for node is not properly defined: Replacing with macDetectionVlan");
@@ -430,6 +435,43 @@ sub shouldAutoRegister {
     # otherwise don't autoreg
     return 0;
 }
+
+=item evaluateCategory
+
+Check whether or not we should update the category of a node depending of the connecting user
+
+=cut
+sub evaluateCategory {
+    my ($mac, $node_info, $dn) = @_;
+    my $logger = Log::Log4perl->get_logger();
+
+    #Strip the DN to remove the user
+    $dn =~ /^cn=\w+,(.+)$/i;
+    my $stripped_dn = $1;
+
+    $logger->info("Node $mac DN is $stripped_dn");
+
+    #Grab the expected category from the SQL
+    my $expectedCategory = pf::nodecategory::nodecategory_dn($stripped_dn);
+
+    $logger->info("Node $mac expected category is $expectedCategory, current is $node_info->{category}");
+
+    #Get the current category and compare if the SQL category is defined
+    if (defined($expectedCategory)) {
+       if ($node_info->{category} ne $expectedCategory) {
+           node_modify($mac, ( 'category' => $expectedCategory ));
+           $logger->info("Node $mac category adjusted to $expectedCategory");
+       } else {
+          return 0;
+       }              
+    } else {
+      return 0;
+    }
+
+    #Impossible to hit
+    return 1;    
+}
+
 =back
 
 =head1 AUTHOR

@@ -64,11 +64,11 @@ sub authorize {
     my ($this, $radius_request) = @_;
     my $logger = Log::Log4perl::get_logger(ref($this));
 
-    my ($nas_port_type, $switch_ip, $eap_type, $mac, $port, $user_name) = $this->_parseRequest($radius_request);
+    my ($nas_port_type, $switch_ip, $eap_type, $mac, $port, $user_name, $dn) = $this->_parseRequest($radius_request);
 
     $logger->trace("received a radius authorization request with parameters: ".
         "nas port type => $nas_port_type, switch_ip => $switch_ip, EAP-Type => $eap_type, ".
-        "mac => $mac, port => $port, username => $user_name");
+        "mac => $mac, port => $port, username => $user_name", dn => $dn);
 
     my $connection_type = $this->_identifyConnectionType($nas_port_type, $eap_type, $mac, $user_name);
 
@@ -152,7 +152,7 @@ sub authorize {
     }
 
     # grab vlan
-    my $vlan = $vlan_obj->fetchVlanForNode($mac, $switch, $port, $connection_type, $user_name, $ssid);
+    my $vlan = $vlan_obj->fetchVlanForNode($mac, $switch, $port, $connection_type, $user_name, $ssid, $dn);
 
     # should this node be kicked out?
     if (defined($vlan) && $vlan == -1) {
@@ -221,13 +221,14 @@ sub _parseRequest {
     my $user_name = $radius_request->{'User-Name'};
     my $nas_port_type = $radius_request->{'NAS-Port-Type'};
     my $port = $radius_request->{'NAS-Port'};
+    my $dn = $radius_request->{'Ldap-UserDn'};
 
     my $eap_type = 0;
     if (exists($radius_request->{'EAP-Type'})) {
         $eap_type = 1;
     }
 
-    return ($nas_port_type, $networkdevice_ip, $eap_type, $mac, $port, $user_name);
+    return ($nas_port_type, $networkdevice_ip, $eap_type, $mac, $port, $user_name, $dn);
 }
 
 =item * _doWeActOnThisCall

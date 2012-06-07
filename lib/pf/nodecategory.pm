@@ -40,6 +40,7 @@ BEGIN {
         nodecategory_delete
         nodecategory_exist
         nodecategory_lookup
+        nodecategory_dn
     );
 }
 
@@ -89,6 +90,10 @@ sub nodecategory_db_prepare {
 
     $nodecategory_statements->{'nodecategory_exist_sql'} = get_db_handle()->prepare(
         qq [ SELECT category_id FROM node_category WHERE category_id = ? ]
+    );
+
+    $nodecategory_statements->{'nodecategory_dn_sql'} = get_db_handle()->prepare(
+        qq [ SELECT category FROM category_dn WHERE dn LIKE ? ]
     );
 
     $nodecategory_db_prepared = 1;
@@ -210,6 +215,28 @@ sub nodecategory_lookup {
         return;
     }
 }
+
+=item nodecategory_dn 
+
+returns category name from a dn if it exists, undef otherwise
+
+=cut
+sub nodecategory_dn {
+    my ($dn) = @_;
+
+    my $query = db_query_execute(NODECATEGORY, $nodecategory_statements, 'nodecategory_dn_sql', $dn);
+    my $category = $query->fetchrow_hashref();
+
+    # just get one row and finish
+    $query->finish();
+
+    if (defined($category->{'category'})) {
+        return $category->{'category'};
+    } else {
+	return;
+    }
+}
+
 =back
 
 =head1 AUTHOR
