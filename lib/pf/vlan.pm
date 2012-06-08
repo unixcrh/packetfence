@@ -445,31 +445,26 @@ sub evaluateCategory {
     my ($mac, $node_info, $dn) = @_;
     my $logger = Log::Log4perl->get_logger();
 
-    #Strip the DN to remove the user
-    $dn =~ /^cn=\w+,(.+)$/i;
-    my $stripped_dn = $1;
+    $logger->info("Node $mac DN is $dn");
 
-    $logger->info("Node $mac DN is $stripped_dn");
+    #Grab the data from the category_dn table
+    my @all_dn = pf::nodecategory::nodecategory_dn();
 
-    #Grab the expected category from the SQL
-    my $expectedCategory = pf::nodecategory::nodecategory_dn($stripped_dn);
+    $logger->info("Node $mac - Try to match a DN from the database");
 
-    $logger->info("Node $mac expected category is $expectedCategory, current is $node_info->{category}");
-
-    #Get the current category and compare if the SQL category is defined
-    if (defined($expectedCategory)) {
-       if ($node_info->{category} ne $expectedCategory) {
-           node_modify($mac, ( 'category' => $expectedCategory ));
-           $logger->info("Node $mac category adjusted to $expectedCategory");
-       } else {
-          return 0;
-       }              
-    } else {
-      return 0;
+    foreach my $dn_info (@all_dn) {
+       $logger->info("Node $mac - Comparing DN $dn with the DB $dn_info->{'dn'}");
+       if ($dn =~ /$dn_info->{'dn'}/i && $node_info->{category} ne $dn_info->{'category'}) {
+           node_modify($mac, ( 'category' => $dn_info->{'category'} ));
+           $logger->info("Node $mac category adjusted to $dn_info->{'category'}");
+           return 1;
+       } 
     }
 
-    #Impossible to hit
-    return 1;    
+    $logger->info("Node $mac - Cannot match anything");
+
+    # Cannot match
+    return 0;    
 }
 
 =back
