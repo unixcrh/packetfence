@@ -628,7 +628,7 @@ category = any
 # provisioning.certificate
 #
 # Certificate to send to the node
-provisioning.certificate = 
+certificate = 
 
 [billing]
 #
