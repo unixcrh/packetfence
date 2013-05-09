@@ -76,7 +76,7 @@ $networkdevice_object = pf::SNMP::Aruba->new(
     '-ip' => '127.0.0.1',
 );
 # bogusly calling methods trying to generate warnings
-$networkdevice_object->deauthenticateMacDefault("aa:bb:cc:dd:ee:ff");
+#$networkdevice_object->deauthenticateMacDefault("aa:bb:cc:dd:ee:ff");
 # putting back old die handler
 $SIG{__DIE__} = $die_handler;
 
