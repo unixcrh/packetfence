@@ -412,6 +412,19 @@ sub deauthTechniques {
 }
 
 
+=item extractVLAN
+
+Extract VLAN from the radius attributes.
+
+=cut
+
+sub extractVLAN {
+    my ($self, $radius_request) = @_;
+    my $logger = Log::Log4perl::get_logger( ref($self) );
+    return $radius_request->{'Aruba-User-Vlan'} if (defined($radius_request->{'Aruba-User-Vlan'}));
+    return;
+}
+    
 =item
 
 =cut
