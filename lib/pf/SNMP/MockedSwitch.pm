@@ -2853,6 +2853,19 @@ sub deauthenticateMacDefault {
     return $FALSE;
 }
 
+=item extractVLAN
+
+Extract VLAN from the radius attributes.
+
+=cut
+
+sub extractVLAN {
+    my ($self, $radius_request) = @_;
+    my $logger = Log::Log4perl::get_logger( ref($self) );
+    $logger->warn("Not implemented");
+    return;
+}
+
 =back
 
 =head1 AUTHOR
