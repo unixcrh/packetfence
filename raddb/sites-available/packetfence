@@ -29,7 +29,7 @@ preacct {
 accounting {
         sql
         attr_filter.accounting_response
-        packetfence
+#        packetfence
 }
 
 session {
