@@ -73,7 +73,7 @@ if (defined($cgi->url_param('code'))) {
             my $expiration = &pf::authentication::matchByType($email_type, $auth_params, $Actions::SET_ACCESS_DURATION);
 
             if (defined $expiration) {
-                $expiration = POSIX::strftime("%Y-%m-%d %H:%M:%S", localtime(time + normalize_time($expiration)));
+                $expiration = access_duration($expiration);
             }
             else {
                 $expiration = &pf::authentication::matchByType($email_type, $auth_params, $Actions::SET_UNREG_DATE);
@@ -203,7 +203,7 @@ if (defined($cgi->url_param('code'))) {
             $info{'unregdate'} = &pf::authentication::matchByType($email_type, {username => $pid}, $Actions::SET_ACCESS_DURATION);
 
             if (defined $info{'unregdate'}) {
-                $info{'unregdate'} = POSIX::strftime("%Y-%m-%d %H:%M:%S", localtime(time + normalize_time($info{'unregdate'})));
+                $info{'unregdate'} = access_duration($info{'unregdate'});
             }
             else {
                 $info{'unregdate'} = &pf::authentication::matchByType($email_type, {username => $pid}, $Actions::SET_UNREG_DATE);
