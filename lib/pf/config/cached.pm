@@ -352,8 +352,6 @@ sub new {
             $self->addReloadCallbacks(@$onReload) if @$onReload;
             $self->addFileReloadCallbacks(@$onFileReload) if @$onFileReload;
             $self->addCacheReloadCallbacks(@$onCacheReload) if @$onCacheReload;
-            #Rereading the config to ensure the latest version
-            $self->ReadConfig();
         } else {
             delete $params{'-file'} unless -e $file;
             $config = $class->computeFromPath(
@@ -361,7 +359,6 @@ sub new {
                 sub {
                     my $lock = lockFileForReading($file);
                     my $config = pf::IniFiles->new(%params);
-                    unlockFilehandle($lock);
                     $config->SetFileName($file);
                     $config->SetWriteMode($WRITE_PERMISSIONS);
                     my $mode = oct($config->GetWriteMode);
@@ -388,6 +385,8 @@ sub new {
         $self->_callFileReloadCallbacks() if $reload_onfile;
         $self->_callCacheReloadCallbacks() unless $reload_onfile;
     }
+    #Rereading the config to ensure the latest version if from the global cache or has an imported config
+    $self->ReadConfig();
     return $self;
 }
 
@@ -735,9 +734,9 @@ sub _expireIf {
     my $imported_expired = 0;
     my $timestamp = $cache_object->value->{_timestamp} || 0;
     #checking to see if the imported file needs to be reimported also
-    if ( ref($self) && exists $self->{imported} ) {
-        my $imported = $self->{imported};
-        $imported_expired = (defined $imported && $timestamp < getModTimestamp($imported->GetFileName));
+    my $imported;
+    if ( ref($self) && exists $self->{imported} && ($imported = $self->{imported} )) {
+        $imported_expired = ($timestamp < getModTimestamp($imported->GetFileName));
     }
     return ($imported_expired ||  !-e $file ||  ( $timestamp < getModTimestamp($file)));
 }
