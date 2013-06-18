@@ -358,7 +358,6 @@ has_field controllerPort =>
     },
   );
 
-
 =head1 METHODS
 
 =head2 options_inlineTrigger
