@@ -171,7 +171,8 @@ has_block 'snmp' =>
 
 has_block 'definition' =>
   (
-   render_list => [ qw(type mode deauthMethod uplink_dynamic uplink controllerIp) ],
+   tag => 'div',
+   render_list => [ qw(type mode deauthMethod uplink_dynamic uplink controllerIp controllerPort) ],
   );
 has_field 'SNMPVersion' =>
   (
@@ -357,7 +358,6 @@ has_field controllerPort =>
         help => 'Only for Wi-fi , if the deauth request must be send to another device than the access point then set the ip of the controller'
     },
   );
-
 
 =head1 METHODS
 
