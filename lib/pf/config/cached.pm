@@ -629,9 +629,10 @@ sub ReadConfig {
             return $config;
         }
     );
-    $self->_callReloadCallbacks;
+    $reloaded_from_cache = refaddr($config) != refaddr($$self);
+    $self->_callReloadCallbacks if($reloaded_from_cache || $reloaded_from_file);
     $self->_callFileReloadCallbacks if $reloaded_from_file;
-    $self->_callCacheReloadCallbacks if refaddr($config) != refaddr($$self);
+    $self->_callCacheReloadCallbacks if $reloaded_from_cache;
     return $result;
 }
 
