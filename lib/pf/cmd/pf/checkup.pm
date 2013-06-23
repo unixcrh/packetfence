@@ -1,47 +1,43 @@
-package pf::pfcmd::cmd::subcmd;
+package pf::cmd::pf::checkup;
 =head1 NAME
 
-pf::pfcmd::cmd::subcmd add documentation
+pf::cmd::checkup add documentation
 
 =cut
 
 =head1 DESCRIPTION
 
-pf::pfcmd::cmd::subcmd
-
-
-=head1 TODO
-
-Have the module loaded dynamically
+pf::cmd::checkup
 
 =cut
 
 use strict;
 use warnings;
-use base qw(pf::pfcmd::cmd);
-use Module::Load;
-
+use pf::services;
+use pf::config;
+use pf::pfcmd::checkup;
+use base qw(pf::cmd);
 sub run {
-    my ($self) = @_;
-    my ($cmd,@args);
-    if(@{$self->{args}}) {
-        @args = @{$self->{args}};
-        my $action = shift @args;
-        $cmd = $self->get_cmd($action);
-    } else {
-        $cmd = $self->default_cmd;
+
+    my @problems = pf::pfcmd::checkup::sanity_check(pf::services::service_list(@pf::services::ALL_SERVICES));
+    foreach my $entry (@problems) {
+        chomp $entry->{$pf::pfcmd::checkup::MESSAGE};
+        print $entry->{$pf::pfcmd::checkup::SEVERITY}  . " - " . $entry->{$pf::pfcmd::checkup::MESSAGE} . "\n";
     }
-    load $cmd;
-    return $cmd->new(@args)->run;
-}
 
-sub get_cmd {
-    my ($self,$action) = @_;
-    my $base = ref($self) || $self;
-    return "${base}::${action}" if defined $action;
-    return $self->unknown_cmd;
-}
+    # if there is a fatal problem, exit with status 255
+    foreach my $entry (@problems) {
+        if ($entry->{$pf::pfcmd::checkup::SEVERITY} eq $pf::pfcmd::checkup::FATAL) {
+            exit(255);
+        }
+    }
 
+    if (@problems) {
+        return $TRUE;
+    } else {
+        return $FALSE;
+    }
+}
 
 =head1 AUTHOR
 

@@ -1,23 +1,32 @@
-package pf::pfcmd::cmd::pf;
+package pf::cmd::help;
 =head1 NAME
 
-pf::pfcmd::cmd::pf add documentation
+pf::cmd::help add documentation
 
 =cut
 
 =head1 DESCRIPTION
 
-pf::pfcmd::cmd::pf
+pf::cmd::help
 
 =cut
 
 use strict;
 use warnings;
-use base qw(pf::pfcmd::cmd::subcmd);
+use base qw(pf::cmd);
+use Pod::Usage;
+use Pod::Find qw(pod_where);
 
-sub unknown_cmd { 'pf::pfcmd::cmd::pf::help' }
+sub run {
+    my ($self) = @_;
+    $self->runHelp;
+}
 
-sub default_cmd { 'pf::pfcmd::cmd::pf::help' }
+sub runHelp {
+    my ($self) = @_;
+    my $package = ref($self) || $self;
+    pod2usage( -input => pod_where({-inc => 1}, $package) );
+}
 
 =head1 AUTHOR
 

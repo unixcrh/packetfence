@@ -1,24 +1,56 @@
-#!/usr/bin/perl
+package pf::cmd::subcmd;
 =head1 NAME
 
-pfcmd2 add documentation
+pf::cmd::subcmd add documentation
 
 =cut
 
 =head1 DESCRIPTION
 
-pfcmd2
+pf::cmd::subcmd
+
+
+=head1 TODO
+
+Have the module loaded dynamically
 
 =cut
 
 use strict;
 use warnings;
-use constant INSTALL_DIR => '/usr/local/pf';
-use lib INSTALL_DIR . "/lib";
+use base qw(pf::cmd);
+use Module::Load;
 
-use pf::cmd::pf;
+sub run {
+    my ($self) = @_;
+    my ($cmd,@args);
+    if(@{$self->{args}}) {
+        @args = @{$self->{args}};
+        my $action = shift @args;
+        $cmd = $self->get_cmd($action);
+    } else {
+        $cmd = $self->default_cmd;
+    }
+    return $self->runSubCmd($cmd,@args);
+}
 
-exit pf::cmd::pf->new(@ARGV)->run();
+sub runSubCmd {
+    my ($self,$cmd,@args) = @_;
+    $self->loadSubCmd($cmd);
+    return $cmd->new(@args)->run;
+}
+
+sub loadSubCmd {
+    my ($self,$cmd) = @_;
+    load $cmd;
+}
+
+sub get_cmd {
+    my ($self,$action) = @_;
+    my $base = ref($self) || $self;
+    return "${base}::${action}" if defined $action;
+    return $self->unknown_cmd;
+}
 
 
 =head1 AUTHOR
@@ -33,7 +65,7 @@ Copyright (C) 2005-2013 Inverse inc.
 
 =head1 LICENSE
 
-This program is free software; you can redistribute it and/or
+This program is free software; you can redistribute it and::or
 modify it under the terms of the GNU General Public License
 as published by the Free Software Foundation; either version 2
 of the License, or (at your option) any later version.
@@ -49,4 +81,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
 USA.
 
 =cut
+
+1;
 
