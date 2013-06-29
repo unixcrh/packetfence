@@ -60,7 +60,6 @@ our (
 #profiles.conf variables
     %Profile_Filters, %Profiles_Config, $cached_profiles_config,
 #Other configuraton files variables
-    @stored_config_files,
 
     %connection_type, %connection_type_to_str, %connection_type_explained,
     %connection_group, %connection_group_to_str,
@@ -109,7 +108,7 @@ BEGIN {
         init_config
         %Profile_Filters %Profiles_Config $cached_profiles_config
         $cached_pf_config $cached_network_config $cached_floating_device_config
-        $cached_pf_default_config $cached_pf_doc_config @stored_config_files
+        $cached_pf_default_config $cached_pf_doc_config
         $OS
         %Doc_Config
     );
@@ -131,15 +130,6 @@ Readonly::Scalar our $FALSE => 0;
 Readonly::Scalar our $TRUE => 1;
 Readonly::Scalar our $YES => 'yes';
 Readonly::Scalar our $NO => 'no';
-
-@stored_config_files = (
-    $pf_config_file, $network_config_file,
-    $switches_config_file, $violations_config_file,
-    $authentication_config_file, $floating_devices_config_file,
-    $dhcp_fingerprints_file, $profiles_config_file,
-    $oui_file, $floating_devices_file,
-    $chi_config_file,
-);
 
 Readonly our @VALID_TRIGGER_TYPES =>
   (
