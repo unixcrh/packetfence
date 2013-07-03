@@ -16,21 +16,10 @@ A pf::cmd class that extracts the usage from the parentCmd
 use strict;
 use warnings;
 use base qw(pf::cmd);
-BEGIN {
-    $Pod::Usage::Formatter = 'Pod::Text::Termcap';
-}
-use Pod::Usage;
-use Pod::Find qw(pod_where);
 
 sub run {
     my ($self) = @_;
-    $self->runHelp;
-}
-
-sub runHelp {
-    my ($self) = @_;
-    my $package = ref($self->{parentCmd}) || ref($self) || $self;
-    pod2usage( -input => pod_where({-inc => 1}, $package) );
+    $self->showHelp(ref($self->{parentCmd}) || $self->{parentCmd});
 }
 
 =head1 AUTHOR
