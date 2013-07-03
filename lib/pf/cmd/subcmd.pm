@@ -18,8 +18,10 @@ Have the module loaded dynamically
 
 use strict;
 use warnings;
+use pf::cmd;
 use base qw(pf::cmd);
 use Module::Load;
+use pf::cmd::help;
 
 sub run {
     my ($self) = @_;
@@ -27,30 +29,45 @@ sub run {
     if(@{$self->{args}}) {
         @args = @{$self->{args}};
         my $action = shift @args;
-        $cmd = $self->get_cmd($action);
+        $cmd = $self->getCmd($action);
     } else {
-        $cmd = $self->default_cmd;
+        $cmd = $self->defaultCmd;
     }
-    return $self->runSubCmd($cmd,@args);
+    return $cmd->new( {parentCmd => $self, args => \@args})->run;
 }
 
-sub runSubCmd {
-    my ($self,$cmd,@args) = @_;
-    $self->loadSubCmd($cmd);
-    return $cmd->new(@args)->run;
-}
-
-sub loadSubCmd {
-    my ($self,$cmd) = @_;
-    load $cmd;
-}
-
-sub get_cmd {
+sub getCmd {
     my ($self,$action) = @_;
-    my $base = ref($self) || $self;
-    return "${base}::${action}" if defined $action;
-    return $self->unknown_cmd;
+    my $cmd;
+    if (defined $action) {
+        my $module;
+        if($action eq 'help') {
+            $module = $self->helpCmd;
+        } else {
+            my $base = ref($self) || $self;
+            $module = "${base}::${action}";
+        }
+        eval {
+            load $module;
+            $cmd = $module;
+        };
+    }
+    unless($cmd) {
+        $cmd = $self->unknownCmd;
+        load $cmd;
+    }
+    return $cmd;
 }
+
+sub helpCmd { "pf::cmd::help" }
+
+sub unknownCmd {
+    my ($self) = @_;
+    return $self->defaultCmd;
+}
+
+sub defaultCmd { "pf::cmd::help" }
+
 
 
 =head1 AUTHOR
