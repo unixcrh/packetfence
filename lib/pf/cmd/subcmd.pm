@@ -27,17 +27,16 @@ sub run {
     my ($self) = @_;
     my ($cmd,@args);
     if(@{$self->{args}}) {
-        @args = @{$self->{args}};
-        my $action = shift @args;
-        $cmd = $self->getCmd($action);
+        ($cmd,@args) = $self->getCmdAndArgs();
     } else {
         $cmd = $self->defaultCmd;
     }
     return $cmd->new( {parentCmd => $self, args => \@args})->run;
 }
 
-sub getCmd {
-    my ($self,$action) = @_;
+sub getCmdAndArgs {
+    my ($self) = @_;
+    my ($action,@args) = @{$self->{args}};
     my $cmd;
     if (defined $action) {
         my $module;
@@ -56,7 +55,7 @@ sub getCmd {
         $cmd = $self->unknownCmd;
         load $cmd;
     }
-    return $cmd;
+    return $cmd,@args;
 }
 
 sub helpCmd { "pf::cmd::help" }
