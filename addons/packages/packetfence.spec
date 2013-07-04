@@ -751,6 +751,7 @@ fi
                         /usr/local/pf/html/captive-portal/content/images/*
 %dir                    /usr/local/pf/html/captive-portal/templates
 %config(noreplace)      /usr/local/pf/html/captive-portal/templates/*
+%config(noreplace)      /usr/local/pf/html/captive-portal/profile-templates/*
 %dir                    /usr/local/pf/html/common
                         /usr/local/pf/html/common/*
                         /usr/local/pf/html/pfappserver/
