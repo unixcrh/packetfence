@@ -65,6 +65,9 @@ if ($form_return != 1) {
     exit(0);
 }
 
+my $pid = $info{'pid'};
+my $params = { username => $pid };
+
 my $locationlog_entry = locationlog_view_open_mac($mac);
 if ($locationlog_entry) {
     $params->{connection_type} = $locationlog_entry->{'connection_type'};
