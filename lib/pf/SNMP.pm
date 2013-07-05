@@ -2554,6 +2554,8 @@ sub getVoipVsa {
     return;
 }
 
+
+
 =item enablePortConfigAsTrunk - sets port as multi-Vlan port
 
 =cut
@@ -2805,6 +2807,11 @@ sub deauthenticateMacDefault {
     $logger->warn("Unimplemented! First, make sure your configuration is ok. "
         . "If it is then we don't support your hardware. Open a bug report with your hardware type.");
     return $FALSE;
+}
+
+sub synchronize_locationlog {
+    my ( $self, $ifIndex, $vlan, $mac, $voip_status, $connection_type, $user_name, $ssid) = @_;
+    locationlog_synchronize($self->{_id},$self->{_ip},$self->{_switchMac}, $ifIndex, $vlan, $mac, $voip_status, $connection_type, $user_name, $ssid);
 }
 
 =back
