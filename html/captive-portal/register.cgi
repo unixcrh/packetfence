@@ -48,6 +48,11 @@ if ( !valid_mac($mac) ) {
   exit(0);
 }
 
+if (defined($cgi->url_param('mode')) && $cgi->url_param('mode') eq "aup") {
+  pf::web::generate_aup_standalone_page($portalSession);
+  exit(0);
+}
+
 $logger->info($portalSession->getClientIp() . " - " . $portalSession->getClientMac() . " on registration page");
 
 my %info;
