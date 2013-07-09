@@ -13,8 +13,6 @@ pf::cmd::roles::show_parent_help
 
 use strict;
 use warnings;
-use Pod::Usage;
-use Pod::Find qw(pod_where);
 use base qw(Exporter);
 
 our @EXPORT = qw(showHelp);
