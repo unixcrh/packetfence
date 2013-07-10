@@ -26,7 +26,7 @@ use pf::cmd::help;
 sub run {
     my ($self) = @_;
     my ($cmd,@args);
-    if(@{$self->{args}}) {
+    if($self->args) {
         ($cmd,@args) = $self->getCmdAndArgs();
     } else {
         $cmd = $self->defaultCmd;
@@ -36,7 +36,7 @@ sub run {
 
 sub getCmdAndArgs {
     my ($self) = @_;
-    my ($action,@args) = @{$self->{args}};
+    my ($action,@args) = $self->args;
     my $cmd;
     if (defined $action) {
         my $module;
