@@ -43,14 +43,21 @@ my $mac = $portalSession->getClientMac();
 
 # we need a valid MAC to identify a node
 if ( !valid_mac($mac) ) {
-  $logger->info($portalSession->getClientIp() . " not resolvable, generating error page");
-  pf::web::generate_error_page($portalSession, i18n("error: not found in the database"));
-  exit(0);
+    $logger->info($portalSession->getClientIp() . " not resolvable, generating error page");
+    pf::web::generate_error_page($portalSession, i18n("error: not found in the database"));
+    exit(0);
+}
+
+unless (defined($cgi->url_param('email')) || pf::web::util::is_email_valid($cgi->param('email'))) {
+    $portalSession->stash->{'email'} = $portalSession->cgi->param("email");
+    pf::web::generate_login_page($portalSession, 'Please enter a valid email address.');
+    exit(0);
 }
 
 if (defined($cgi->url_param('mode')) && $cgi->url_param('mode') eq "aup") {
-  pf::web::generate_aup_standalone_page($portalSession);
-  exit(0);
+    $portalSession->stash->{'email'} = $portalSession->cgi->param("email");
+    pf::web::generate_aup_standalone_page($portalSession);
+    exit(0);
 }
 
 $logger->info($portalSession->getClientIp() . " - " . $portalSession->getClientMac() . " on registration page");
@@ -58,7 +65,7 @@ $logger->info($portalSession->getClientIp() . " - " . $portalSession->getClientM
 my %info;
 
 # Pull username
-$info{'pid'} = $cgi->remote_user || "admin";
+$info{'pid'} = $portalSession->cgi->param("email");
 
 # Pull browser user-agent string
 $info{'user_agent'} = $cgi->user_agent;
