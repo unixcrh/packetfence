@@ -1,7 +1,7 @@
 package pf::cmd::subcmd;
 =head1 NAME
 
-pf::cmd::subcmd add documentation
+pf::cmd::subcmd for loading command actions on demand
 
 =cut
 
@@ -9,10 +9,7 @@ pf::cmd::subcmd add documentation
 
 pf::cmd::subcmd
 
-
-=head1 TODO
-
-Have the module loaded dynamically
+This is a base class for ondemand loading of command line actions
 
 =cut
 
@@ -23,25 +20,23 @@ use base qw(pf::cmd);
 use Module::Load;
 use pf::cmd::help;
 
-sub run {
+=head2 _run
+The overridded method to handle the action
+=cut
+
+sub _run {
     my ($self) = @_;
-    my ($cmd,@args);
-    if($self->args) {
-        ($cmd,@args) = $self->getCmdAndArgs();
-    } else {
-        $cmd = $self->defaultCmd;
-    }
-    return $cmd->new( {parentCmd => $self, args => \@args})->run;
+    return $self->{subcmd}->new( {parentCmd => $self, args => $self->{subcmd_args}})->run;
 }
 
-sub getCmdAndArgs {
+sub parseArgs {
     my ($self) = @_;
     my ($action,@args) = $self->args;
     my $cmd;
     if (defined $action) {
         my $module;
         if($action eq 'help') {
-            $module = $self->helpCmd;
+            $module = $self->helpActionCmd;
         } else {
             my $base = ref($self) || $self;
             $module = "${base}::${action}";
@@ -50,22 +45,40 @@ sub getCmdAndArgs {
             load $module;
             $cmd = $module;
         };
+        if($@) {
+            $cmd = $self->unknownActionCmd;
+        }
+    } else {
+        $cmd = $self->noActionCmd;
     }
-    unless($cmd) {
-        $cmd = $self->unknownCmd;
-        load $cmd;
-    }
-    return $cmd,@args;
+    $self->{subcmd} = $cmd;
+    $self->{subcmd_args} = \@args;
+    return 1;
 }
 
-sub helpCmd { "pf::cmd::help" }
+=head2 helpActionCmd
+    The module that will handle the help action
+=cut
 
-sub unknownCmd {
+sub helpActionCmd { "pf::cmd::help" }
+
+=head2 noActionCmd
+    The module that will handle when there is no action defaults to $self->helpActionCmd
+=cut
+
+sub noActionCmd {
     my ($self) = @_;
-    return $self->defaultCmd;
+    return $self->helpActionCmd;
 }
 
-sub defaultCmd { "pf::cmd::help" }
+=head2 unknownActionCmd
+    The module that will handle when you cannot load an action defaults to $self->helpActionCmd
+=cut
+
+sub unknownActionCmd {
+    my ($self) = @_;
+    return $self->helpActionCmd;
+}
 
 
 
