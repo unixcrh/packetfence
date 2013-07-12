@@ -48,15 +48,15 @@ if ( !valid_mac($mac) ) {
     exit(0);
 }
 
-unless (defined($cgi->url_param('email')) || pf::web::util::is_email_valid($cgi->param('email'))) {
-    $portalSession->stash->{'email'} = $portalSession->cgi->param("email");
-    pf::web::generate_login_page($portalSession, 'Please enter a valid email address.');
-    exit(0);
-}
-
 if (defined($cgi->url_param('mode')) && $cgi->url_param('mode') eq "aup") {
     $portalSession->stash->{'email'} = $portalSession->cgi->param("email");
     pf::web::generate_aup_standalone_page($portalSession);
+    exit(0);
+}
+
+unless (defined($cgi->url_param('email')) || pf::web::util::is_email_valid($cgi->param('email'))) {
+    $portalSession->stash->{'email'} = $portalSession->cgi->param("email");
+    pf::web::generate_login_page($portalSession, 'Please enter a valid email address.');
     exit(0);
 }
 
